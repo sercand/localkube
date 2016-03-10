@@ -1,4 +1,4 @@
-package main
+package localkube
 
 import (
 	"fmt"
@@ -7,12 +7,22 @@ import (
 	"github.com/coreos/etcd/pkg/types"
 )
 
+const (
+	EtcdName = "etcd"
+)
+
 var (
 	ClientURLs = []string{"http://localhost:2379", "http://localhost:4001"}
 	PeerURLs   = []string{"http://localhost:2380"}
 )
 
-func Etcd(dataDir string) (*etcdserver.EtcdServer, error) {
+// Etcd is a Server which manages an Etcd cluster
+type Etcd struct {
+	*etcdserver.EtcdServer
+}
+
+// NewEtcd creates a new default etcd Server using 'dataDir' for persistence. Panics if could not be configured.
+func NewEtcd(dataDir string) *Etcd {
 	name := "default"
 	clientURLs := urlsOrPanic(ClientURLs)
 	peerURLs := urlsOrPanic(PeerURLs)
@@ -40,10 +50,23 @@ func Etcd(dataDir string) (*etcdserver.EtcdServer, error) {
 
 	server, err := etcdserver.NewServer(config)
 	if err != nil {
-		return nil, fmt.Errorf("Etcd config error: %v", err)
+		msg := fmt.Sprintf("Etcd config error: %v", err)
+		panic(msg)
 	}
 
-	return server, nil
+	return &Etcd{
+		EtcdServer: server,
+	}
+}
+
+// Status is currently not support by Etcd
+func (Etcd) Status() Status {
+	return NotImplemented
+}
+
+// Name returns the servers unique name
+func (Etcd) Name() string {
+	return EtcdName
 }
 
 func urlsOrPanic(urlStrs []string) types.URLs {
