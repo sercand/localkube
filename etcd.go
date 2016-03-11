@@ -67,7 +67,11 @@ func NewEtcd(dataDir string) *Etcd {
 	ch := etcdhttp.NewClientHandler(server, config.ReqTimeout())
 	for _, l := range clientListeners {
 		go func(l net.Listener) {
-			panic(serveHTTP(l, ch, 5*time.Minute))
+			srv := &http.Server{
+				Handler:     ch,
+				ReadTimeout: 5*time.Minute,
+			}
+			panic(srv.Serve(l))
 		}(l)
 	}
 
@@ -118,12 +122,4 @@ func createListenersOrPanic(urls types.URLs) (listeners []net.Listener) {
 		listeners = append(listeners, l)
 	}
 	return listeners
-}
-
-func serveHTTP(l net.Listener, handler http.Handler, readTimeout time.Duration) error {
-	srv := &http.Server{
-		Handler:     handler,
-		ReadTimeout: readTimeout,
-	}
-	return srv.Serve(l)
 }

@@ -1,5 +1,9 @@
 package localkube
 
+import (
+	"fmt"
+)
+
 // Server represents a component that Kubernetes depends on. It allows for the management of
 // the lifecycle of the component.
 type Server interface {
@@ -20,27 +24,52 @@ type Server interface {
 type Servers []Server
 
 // Get returns a server matching name, returns nil if server doesn't exit.
-func (servers Servers) Get(name string) Server {
+func (servers Servers) Get(name string) (Server, error) {
 	for _, server := range servers {
 		if server.Name() == name {
-			return server
+			return server, nil
 		}
 	}
-	return nil
+	return nil, fmt.Errorf("server '%s' does not exist", name)
 }
 
 // StartAll starts all services, starting from 0th item and ascending.
 func (servers Servers) StartAll() {
 	for _, server := range servers {
+		fmt.Printf("Starting %s...\n", server.Name())
 		server.Start()
 	}
 }
 
-// StopAll stops all services, starting with the last item and descending.
+// StopAll stops all services, starting with the last item.
 func (servers Servers) StopAll() {
-	for _, server := range servers {
+	for i := len(servers) - 1; i>=0; i-- {
+		server := servers[i]
 		server.Stop()
+		fmt.Printf("Stopping %s...\n", server.Name())
 	}
+}
+
+// Start is a helper method to start the Server specified, returns error if server doesn't exist.
+func (servers Servers) Start(serverName string) error {
+	server, err := servers.Get(serverName)
+	if err != nil {
+		return err
+	}
+
+	server.Start()
+	return nil
+}
+
+// Stop is a helper method to start the Server specified, returns error if server doesn't exist.
+func (servers Servers) Stop(serverName string) error {
+	server, err := servers.Get(serverName)
+	if err != nil {
+		return err
+	}
+
+	server.Stop()
+	return nil
 }
 
 // Status returns a map with the Server name as the key and it's Status as the value.
@@ -51,7 +80,7 @@ func (servers Servers) Status() (statuses map[string]Status) {
 	return statuses
 }
 
-// SimpleServer provides and easy implementation of Server.
+// SimpleServer provides a minimal implementation of Server.
 type SimpleServer struct {
 	ComponentName string
 	StartupFn     func()
