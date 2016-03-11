@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/coreos/etcd/etcdserver"
@@ -17,21 +18,33 @@ const (
 )
 
 var (
-	ClientURLs = []string{"http://localhost:2379"}
-	PeerURLs   = []string{"http://localhost:2380"}
+	// EtcdClientURLs have listeners created and handle etcd API traffic
+	EtcdClientURLs = []string{"http://localhost:2379"}
+
+	// EtcdPeerURLs don't have listeners created for them, they are used to pass Etcd validation
+	EtcdPeerURLs = []string{"http://localhost:2380"}
+
+	// EtcdDataDirectory is where all state is stored. Can be changed with env var ETCD_DATA_DIRECTORY
+	EtcdDataDirectory = "/var/etcd/data"
 )
 
+func init() {
+	if dataDir := os.Getenv("ETCD_DATA_DIRECTORY"); len(dataDir) != 0 {
+		EtcdDataDirectory = dataDir
+	}
+}
+
 // Etcd is a Server which manages an Etcd cluster
-type Etcd struct {
+type EtcdServer struct {
 	*etcdserver.EtcdServer
 	clientListens []net.Listener
 }
 
 // NewEtcd creates a new default etcd Server using 'dataDir' for persistence. Panics if could not be configured.
-func NewEtcd(dataDir string) *Etcd {
+func NewEtcd() *EtcdServer {
 	name := "default"
-	clientURLs := urlsOrPanic(ClientURLs)
-	peerURLs := urlsOrPanic(PeerURLs)
+	clientURLs := urlsOrPanic(EtcdClientURLs)
+	peerURLs := urlsOrPanic(EtcdPeerURLs)
 
 	urlsMap := map[string]types.URLs{
 		name: peerURLs,
@@ -40,13 +53,12 @@ func NewEtcd(dataDir string) *Etcd {
 	clientListeners := createListenersOrPanic(clientURLs)
 
 	config := &etcdserver.ServerConfig{
-		Name:                name,
-		ClientURLs:          clientURLs,
-		PeerURLs:            peerURLs,
-		DataDir:             dataDir,
-		InitialClusterToken: "etcd-cluster",
-		InitialPeerURLsMap:  urlsMap,
-		Transport:           http.DefaultTransport.(*http.Transport),
+		Name:               name,
+		ClientURLs:         clientURLs,
+		PeerURLs:           peerURLs,
+		DataDir:            EtcdDataDirectory,
+		InitialPeerURLsMap: urlsMap,
+		Transport:          http.DefaultTransport.(*http.Transport),
 
 		NewCluster: true,
 
@@ -69,20 +81,20 @@ func NewEtcd(dataDir string) *Etcd {
 		go func(l net.Listener) {
 			srv := &http.Server{
 				Handler:     ch,
-				ReadTimeout: 5*time.Minute,
+				ReadTimeout: 5 * time.Minute,
 			}
 			panic(srv.Serve(l))
 		}(l)
 	}
 
-	return &Etcd{
+	return &EtcdServer{
 		EtcdServer:    server,
 		clientListens: clientListeners,
 	}
 }
 
 // Stop closes all connections and stops the Etcd server
-func (e *Etcd) Stop() {
+func (e *EtcdServer) Stop() {
 	e.EtcdServer.Stop()
 	for _, l := range e.clientListens {
 		l.Close()
@@ -90,12 +102,12 @@ func (e *Etcd) Stop() {
 }
 
 // Status is currently not support by Etcd
-func (Etcd) Status() Status {
+func (EtcdServer) Status() Status {
 	return NotImplemented
 }
 
 // Name returns the servers unique name
-func (Etcd) Name() string {
+func (EtcdServer) Name() string {
 	return EtcdName
 }
 

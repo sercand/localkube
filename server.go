@@ -43,7 +43,7 @@ func (servers Servers) StartAll() {
 
 // StopAll stops all services, starting with the last item.
 func (servers Servers) StopAll() {
-	for i := len(servers) - 1; i>=0; i-- {
+	for i := len(servers) - 1; i >= 0; i-- {
 		server := servers[i]
 		server.Stop()
 		fmt.Printf("Stopping %s...\n", server.Name())

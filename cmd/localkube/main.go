@@ -10,19 +10,11 @@ import (
 
 var (
 	Servers = localkube.Servers{}
-
-	WorkingDirectory string
 )
 
 func init() {
-	if wd, err := os.Getwd(); err != nil {
-		panic(err)
-	} else {
-		WorkingDirectory = wd
-	}
-
 	// setup etc
-	etcd := localkube.NewEtcd(WorkingDirectory)
+	etcd := localkube.NewEtcd()
 	Servers = append(Servers, etcd)
 
 	// setup apiserver
