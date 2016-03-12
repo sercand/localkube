@@ -37,6 +37,7 @@ func init() {
 // Etcd is a Server which manages an Etcd cluster
 type EtcdServer struct {
 	*etcdserver.EtcdServer
+	config        *etcdserver.ServerConfig
 	clientListens []net.Listener
 }
 
@@ -49,8 +50,6 @@ func NewEtcd() *EtcdServer {
 	urlsMap := map[string]types.URLs{
 		name: peerURLs,
 	}
-
-	clientListeners := createListenersOrPanic(clientURLs)
 
 	config := &etcdserver.ServerConfig{
 		Name:               name,
@@ -69,14 +68,28 @@ func NewEtcd() *EtcdServer {
 		ElectionTicks: 10,
 	}
 
-	server, err := etcdserver.NewServer(config)
+	return &EtcdServer{
+		config: config,
+	}
+}
+
+// Starts starts the etcd server and listening for client connections
+func (e *EtcdServer) Start() {
+	var err error
+	e.EtcdServer, err = etcdserver.NewServer(e.config)
 	if err != nil {
 		msg := fmt.Sprintf("Etcd config error: %v", err)
 		panic(msg)
 	}
 
+	// create client listeners
+	clientListeners := createListenersOrPanic(e.config.ClientURLs)
+
+	// start etcd
+	e.EtcdServer.Start()
+
 	// setup client listeners
-	ch := etcdhttp.NewClientHandler(server, config.ReqTimeout())
+	ch := etcdhttp.NewClientHandler(e.EtcdServer, 0)
 	for _, l := range clientListeners {
 		go func(l net.Listener) {
 			srv := &http.Server{
@@ -86,16 +99,14 @@ func NewEtcd() *EtcdServer {
 			panic(srv.Serve(l))
 		}(l)
 	}
-
-	return &EtcdServer{
-		EtcdServer:    server,
-		clientListens: clientListeners,
-	}
 }
 
 // Stop closes all connections and stops the Etcd server
 func (e *EtcdServer) Stop() {
-	e.EtcdServer.Stop()
+	if e.EtcdServer != nil {
+		e.EtcdServer.Stop()
+	}
+
 	for _, l := range e.clientListens {
 		l.Close()
 	}
