@@ -8,14 +8,14 @@ import (
 	"rsprd.com/localkube"
 )
 
-var (
-	Servers = localkube.Servers{}
-)
+var LK *localkube.LocalKube
 
-func init() {
+func load() {
+	LK = new(localkube.LocalKube)
+
 	// setup etc
 	etcd := localkube.NewEtcd()
-	Servers = append(Servers, etcd)
+	LK.Add(etcd)
 
 	// setup apiserver
 	// setup controller-manager
@@ -24,8 +24,16 @@ func init() {
 }
 
 func main() {
-	Servers.StartAll()
-	defer Servers.StopAll()
+	// check for network
+
+	// if first
+	load()
+	err := LK.Run(os.Args, os.Stderr)
+	if err != nil {
+		fmt.Printf("localkube errored: %v\n", err)
+		os.Exit(1)
+	}
+	defer LK.StopAll()
 
 	interruptChan := make(chan os.Signal, 1)
 	signal.Notify(interruptChan, os.Interrupt)

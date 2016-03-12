@@ -109,15 +109,15 @@ func (s *SimpleServer) Status() Status {
 }
 
 // Status indicates the condition of a Server.
-type Status uint
+type Status string
 
 const (
 	// Stopped indicates the server is not running.
-	Stopped Status = iota
+	Stopped Status = "Stopped"
 
 	// Started indicates the server is running.
-	Started
+	Started = "Started"
 
 	// NotImplemented is returned when Status cannot be determined.
-	NotImplemented
+	NotImplemented = "NotImplemented"
 )
