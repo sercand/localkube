@@ -26,6 +26,9 @@ func load() {
 	LK.Add(controllerManager)
 
 	// setup scheduler
+	scheduler := localkube.NewSchedulerServer()
+	LK.Add(scheduler)
+
 	// setup kubelet (configured for weave proxy)
 }
 
