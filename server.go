@@ -88,6 +88,14 @@ type SimpleServer struct {
 	StatusFn      func() Status
 }
 
+// NoShutdown sets the ShutdownFn to print an error when the server gets shutdown. It returns itself to be chainable.
+func (s SimpleServer) NoShutdown() *SimpleServer {
+	s.ShutdownFn = func() {
+		fmt.Printf("The server '%s' is unstoppable.\n", s.ComponentName)
+	}
+	return &s
+}
+
 // Start calls startup function.
 func (s *SimpleServer) Start() {
 	s.StartupFn()

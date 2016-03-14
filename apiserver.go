@@ -23,10 +23,10 @@ func init() {
 }
 
 func NewAPIServer() Server {
-	return &SimpleServer{
+	return SimpleServer{
 		ComponentName: APIServerName,
 		StartupFn:     StartAPIServer,
-	}
+	}.NoShutdown()
 }
 
 func StartAPIServer() {
