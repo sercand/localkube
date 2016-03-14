@@ -18,6 +18,9 @@ func load() {
 	LK.Add(etcd)
 
 	// setup apiserver
+	apiserver := localkube.NewAPIServer()
+	LK.Add(apiserver)
+
 	// setup controller-manager
 	// setup scheduler
 	// setup kubelet (configured for weave proxy)

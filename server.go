@@ -45,8 +45,8 @@ func (servers Servers) StartAll() {
 func (servers Servers) StopAll() {
 	for i := len(servers) - 1; i >= 0; i-- {
 		server := servers[i]
-		server.Stop()
 		fmt.Printf("Stopping %s...\n", server.Name())
+		server.Stop()
 	}
 }
 
@@ -95,7 +95,9 @@ func (s *SimpleServer) Start() {
 
 // Stop calls shutdown function.
 func (s *SimpleServer) Stop() {
-	s.ShutdownFn()
+	if s.ShutdownFn != nil {
+		s.ShutdownFn()
+	}
 }
 
 // Name returns the name of the service.

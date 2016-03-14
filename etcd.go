@@ -89,7 +89,7 @@ func (e *EtcdServer) Start() {
 	e.EtcdServer.Start()
 
 	// setup client listeners
-	ch := etcdhttp.NewClientHandler(e.EtcdServer, 0)
+	ch := etcdhttp.NewClientHandler(e.EtcdServer, e.requestTimeout())
 	for _, l := range clientListeners {
 		go func(l net.Listener) {
 			srv := &http.Server{
@@ -120,6 +120,11 @@ func (EtcdServer) Status() Status {
 // Name returns the servers unique name
 func (EtcdServer) Name() string {
 	return EtcdName
+}
+
+func (e *EtcdServer) requestTimeout() time.Duration {
+	// from github.com/coreos/etcd/etcdserver/config.go
+	return 5*time.Second + 2*time.Duration(e.config.ElectionTicks)*time.Duration(e.config.TickMs)*time.Millisecond
 }
 
 func urlsOrPanic(urlStrs []string) types.URLs {
