@@ -8,14 +8,13 @@ go_import_path: rsprd.com/localkube
 services:
   - docker
 
-install:
-  # install build dependencies
-  - go get -v github.com/tools/godep
+install: true
 
 before_script:
   - make validate
-  - make deps
 
 script:
   - make build
+
+after_success:
   - make build-image

@@ -1,24 +1,36 @@
+mkfile_dir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
 GO ?= go
 GOFMT ?= gofmt -s
 GOLINT ?= golint
 GODEP ?= godep
 DOCKER ?= docker
 
+BUILDER ?=
+
 GOFILES := find . -name '*.go' -not -path "./vendor/*"
+GOOS := $(shell go list -f '{{context.GOOS}}')
 
 GOBUILD_LDFLAGS ?=
 GOBUILD_FLAGS ?=
 
-EXEC_PKG ?= rsprd.com/localkube/cmd/localkube
+PKG ?= rsprd.com/localkube
+EXEC_PKG := $(PKG)/cmd/localkube
+DOCKER_DIR := /go/src/$(PKG)
+
+MNT_DOCKER_SOCK ?= -v "/var/run/docker.sock:/var/run/docker.sock"
+MNT_REPO ?= -v "$(mkfile_dir):$(DOCKER_DIR)"
 
 DOCKER_OPTS ?=
-DOCKER_RUN_OPTS ?= -v "/var/run/docker.sock:/var/run/docker.sock"
+DOCKER_RUN_OPTS ?= $(MNT_DOCKER_SOCK)
 
+# image data
 ORG ?= ethernetdan
 NAME ?= localkube
 TAG ?= latest
 
 DOCKER_IMAGE_NAME = "$(ORG)/$(NAME):$(TAG)"
+DOCKER_DEV_IMAGE ?= "golang:1.6"
 
 .PHONY: all
 all: deps clean validate build build-image
@@ -27,33 +39,37 @@ all: deps clean validate build build-image
 validate: checkgofmt
 
 .PHONY: build
-build: build/localkube
+build: build/localkube-$(GOOS)
+
+.PHONY: docker-build
+docker-build: validate
+	$(DOCKER) run -w $(DOCKER_DIR) $(DOCKER_OPTS) $(MNT_REPO) $(DOCKER_DEV_IMAGE) make build
 
 .PHONY: clean
 clean:
 	rm -rf ./build
 
-build/localkube:
+build/localkube-$(GOOS):
 	$(GO) build -o $@ $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(EXEC_PKG)
 
-PHONY: build-image
+.PHONY: build-image
 build-image: build/context
 	$(DOCKER) build $(DOCKER_OPTS) -t $(DOCKER_IMAGE_NAME) ./build/context
 
-PHONY: run-image
+.PHONY: run-image
 run-image: build-image
-	docker run -it $(DOCKER_OPTS) $(DOCKER_RUN_OPTS) $(DOCKER_IMAGE_NAME)
+	$(DOCKER) run -it $(DOCKER_OPTS) $(DOCKER_RUN_OPTS) $(DOCKER_IMAGE_NAME)
 
-build/context: build/localkube
+build/context: build/localkube-linux
 	cp -r ./image $@
-	cp ./build/localkube ./build/context
-	chmod +x ./build/context/localkube
+	cp ./build/localkube-linux ./build/context
+	chmod +x ./build/context/localkube-linux
 
 
 .PHONY: checkgofmt
 checkgofmt:
 	# get all go files and run go fmt on them
-	files=$$($(GOFILES) | xargs $(GOFMT) -l); echo "test $$files"; if [[ -n "$$files" ]]; then \
+	@files=$$($(GOFILES) | xargs $(GOFMT) -l); if [[ -n "$$files" ]]; then \
 		  echo "Error: '$(GOFMT)' needs to be run on:"; \
 		  echo "$${files}"; \
 		  exit 1; \
@@ -61,4 +77,5 @@ checkgofmt:
 
 .PHONY: deps
 deps:
+	go get github.com/tools/godep
 	$(GODEP) restore -v

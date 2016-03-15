@@ -1,4 +1,6 @@
 FROM weaveworks/weaveexec:1.4.5
 
-ADD . /opt/localkube
+COPY start.sh /opt/localkube/start.sh
+COPY localkube-linux /opt/localkube/localkube
+
 ENTRYPOINT ["/opt/localkube/start.sh"]
