@@ -1,6 +1,6 @@
 mkfile_dir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-GO ?= go
+GO ?= CGO_ENABLED=0 go
 GOFMT ?= gofmt -s
 GOLINT ?= golint
 GODEP ?= godep
@@ -12,7 +12,7 @@ GOFILES := find . -name '*.go' -not -path "./vendor/*"
 GOOS := $(shell go list -f '{{context.GOOS}}')
 
 GOBUILD_LDFLAGS ?=
-GOBUILD_FLAGS ?=
+GOBUILD_FLAGS ?= -a -installsuffix cgo
 
 PKG ?= rsprd.com/localkube
 EXEC_PKG := $(PKG)/cmd/localkube
@@ -43,6 +43,7 @@ build: build/localkube-$(GOOS)
 
 .PHONY: docker-build
 docker-build: validate
+	mkdir build
 	$(DOCKER) run -w $(DOCKER_DIR) $(DOCKER_OPTS) $(MNT_REPO) $(DOCKER_DEV_IMAGE) make build
 
 .PHONY: clean
@@ -53,15 +54,17 @@ build/localkube-$(GOOS):
 	$(GO) build -o $@ $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(EXEC_PKG)
 
 .PHONY: build-image
-build-image: build/context
+build-image: context
 	$(DOCKER) build $(DOCKER_OPTS) -t $(DOCKER_IMAGE_NAME) ./build/context
 
 .PHONY: run-image
 run-image: build-image
 	$(DOCKER) run -it $(DOCKER_OPTS) $(DOCKER_RUN_OPTS) $(DOCKER_IMAGE_NAME)
 
-build/context: build/localkube-linux
-	cp -r ./image $@
+.PHONY: context
+context: build/localkube-linux
+	rm -rf ./build/context
+	cp -r ./image ./build/context
 	cp ./build/localkube-linux ./build/context
 	chmod +x ./build/context/localkube-linux
 

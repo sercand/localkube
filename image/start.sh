@@ -1,11 +1,9 @@
 #!/bin/sh
 
-echo "haldo"
-
 alias weave=/home/weave/weave
 
 # setup networking
-weave launch
-eval $(weave env)
+weave launch-router
+weave launch-proxy --without-dns --rewrite-inspect
 
-/opt/localkube/localkube start
+localkube start

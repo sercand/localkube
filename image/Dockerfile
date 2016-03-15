@@ -1,6 +1,10 @@
 FROM weaveworks/weaveexec:1.4.5
 
-COPY start.sh /opt/localkube/start.sh
-COPY localkube-linux /opt/localkube/localkube
+WORKDIR /opt/localkube
 
-ENTRYPOINT ["/opt/localkube/start.sh"]
+COPY start.sh ./start.sh
+ADD localkube-linux ./localkube
+
+ENV PATH /opt/localkube:$PATH
+
+ENTRYPOINT ["start.sh"]
