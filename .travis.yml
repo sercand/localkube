@@ -1,0 +1,21 @@
+language: go
+sudo: required
+go:
+  - 1.6
+
+go_import_path: rsprd.com/localkube
+
+services:
+  - docker
+
+install:
+  # install build dependencies
+  - go get -v github.com/tools/godep
+
+before_script:
+  - make validate
+  - make deps
+
+script:
+  - make build
+  - make build-image

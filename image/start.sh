@@ -8,4 +8,4 @@ alias weave=/home/weave/weave
 weave launch
 eval $(weave env)
 
-localkube start
+/opt/localkube/localkube start
