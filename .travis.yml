@@ -1,0 +1,20 @@
+language: go
+sudo: required
+go:
+  - 1.6
+
+go_import_path: rsprd.com/localkube
+
+services:
+  - docker
+
+install: true
+
+before_script:
+  - make validate
+
+script:
+  - make build
+
+after_success:
+  - make build-image
