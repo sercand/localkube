@@ -23,7 +23,7 @@ MNT_WEAVE_SOCK ?= -v "/var/run/weave.sock:/var/run/weave.sock"
 MNT_REPO ?= -v "$(mkfile_dir):$(DOCKER_DIR)"
 
 DOCKER_OPTS ?=
-DOCKER_RUN_OPTS ?= $(MNT_DOCKER_SOCK)
+DOCKER_RUN_OPTS ?= $(MNT_DOCKER_SOCK) -p "8080:8080"
 
 # image data
 ORG ?= ethernetdan
@@ -53,9 +53,6 @@ clean:
 
 build/localkube-$(GOOS):
 	$(GO) build -o $@ $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(EXEC_PKG)
-
-build/localkube-linux:
-	GOOS=linux $(GO) build -o $@ $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(EXEC_PKG)
 
 .PHONY: build-image
 build-image: context

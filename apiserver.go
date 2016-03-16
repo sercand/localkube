@@ -1,6 +1,7 @@
 package localkube
 
 import (
+	"fmt"
 	"net"
 	"os"
 
@@ -10,14 +11,17 @@ import (
 
 const (
 	APIServerName = "apiserver"
-	APIServerURL  = "http://127.0.0.1:8080"
+	APIServerHost = "0.0.0.0"
+	APIServerPort = 8080
 )
 
 var (
+	APIServerURL   string
 	ServiceIPRange = "10.1.30.0/24"
 )
 
 func init() {
+	APIServerURL = fmt.Sprintf("http://%s:%d", APIServerHost, APIServerPort)
 	if ipRange := os.Getenv("SERVICE_IP_RANGE"); len(ipRange) != 0 {
 		ServiceIPRange = ipRange
 	}
@@ -32,6 +36,10 @@ func NewAPIServer() Server {
 
 func StartAPIServer() {
 	config := options.NewAPIServer()
+
+	// use host/port from vars
+	config.InsecureBindAddress = net.ParseIP(APIServerHost)
+	config.InsecurePort = APIServerPort
 
 	// use localkube etcd
 	config.EtcdServerList = EtcdClientURLs
