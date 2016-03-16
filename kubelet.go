@@ -11,7 +11,7 @@ const (
 )
 
 var (
-	DockerDaemonSock = "/var/run/weave.sock"
+	DockerDaemonSock = "unix:///var/run/weave/weave.sock"
 )
 
 func NewKubeletServer() Server {
@@ -26,6 +26,9 @@ func StartKubeletServer() {
 
 	// master details
 	config.APIServerList = []string{APIServerURL}
+
+	config.Containerized = true
+	config.ResolverConfig = "/dev/null"
 
 	// defaults from command
 	config.ResolverConfig = kubetypes.ResolvConfDefault

@@ -12,18 +12,23 @@ GOFILES := find . -name '*.go' -not -path "./vendor/*"
 GOOS := $(shell go list -f '{{context.GOOS}}')
 
 GOBUILD_LDFLAGS ?= --ldflags '-extldflags "-static"'
-GOBUILD_FLAGS ?= -a
+GOBUILD_FLAGS ?= -a -v
 
 PKG ?= rsprd.com/localkube
 EXEC_PKG := $(PKG)/cmd/localkube
 DOCKER_DIR := /go/src/$(PKG)
 
-MNT_DOCKER_SOCK ?= -v "/var/run/docker.sock:/var/run/docker.sock"
-MNT_WEAVE_SOCK ?= -v "/var/run/weave.sock:/var/run/weave.sock"
+MNT_ROOT ?= -v "/:/rootfs:ro"
+MNT_SYS ?= -v "/sys:/sys:ro"
+MNT_DOCKER_LIB ?= -v "/var/lib/docker:/var/lib/docker" -v "/mnt/sda1/var/lib/docker:/mnt/sda1/var/lib/docker"
+MNT_KUBELET_LIB ?= -v "/mnt/sda1/var/lib/kubelet:/var/lib/kubelet"
+MNT_RUN ?= -v "/var/run:/var/run:rw"
+
 MNT_REPO ?= -v "$(mkfile_dir):$(DOCKER_DIR)"
 
 DOCKER_OPTS ?=
-DOCKER_RUN_OPTS ?= $(MNT_DOCKER_SOCK) -p "8080:8080"
+DOCKER_OPTS_KUBELET_VOLS ?= $(MNT_ROOT) $(MNT_SYS) $(MNT_DOCKER_LIB) $(MNT_KUBELET_LIB) $(MNT_RUN)
+DOCKER_RUN_OPTS ?= $(DOCKER_OPTS_KUBELET_VOLS) --privileged="true" --net="host" --pid="host"
 
 # image data
 ORG ?= ethernetdan
