@@ -1,6 +1,6 @@
 mkfile_dir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-GO ?= CGO_ENABLED=0 go
+GO ?= go
 GOFMT ?= gofmt -s
 GOLINT ?= golint
 GODEP ?= godep
@@ -11,8 +11,8 @@ BUILDER ?=
 GOFILES := find . -name '*.go' -not -path "./vendor/*"
 GOOS := $(shell go list -f '{{context.GOOS}}')
 
-GOBUILD_LDFLAGS ?=
-GOBUILD_FLAGS ?= -a -installsuffix cgo
+GOBUILD_LDFLAGS ?= --ldflags '-extldflags "-static"'
+GOBUILD_FLAGS ?= -a
 
 PKG ?= rsprd.com/localkube
 EXEC_PKG := $(PKG)/cmd/localkube
