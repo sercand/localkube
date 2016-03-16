@@ -30,6 +30,10 @@ func load() {
 	LK.Add(scheduler)
 
 	// setup kubelet (configured for weave proxy)
+	kubelet := localkube.NewKubeletServer()
+	LK.Add(kubelet)
+
+	// proxy
 }
 
 func main() {

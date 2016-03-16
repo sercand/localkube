@@ -19,6 +19,7 @@ EXEC_PKG := $(PKG)/cmd/localkube
 DOCKER_DIR := /go/src/$(PKG)
 
 MNT_DOCKER_SOCK ?= -v "/var/run/docker.sock:/var/run/docker.sock"
+MNT_WEAVE_SOCK ?= -v "/var/run/weave.sock:/var/run/weave.sock"
 MNT_REPO ?= -v "$(mkfile_dir):$(DOCKER_DIR)"
 
 DOCKER_OPTS ?=
@@ -52,6 +53,9 @@ clean:
 
 build/localkube-$(GOOS):
 	$(GO) build -o $@ $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(EXEC_PKG)
+
+build/localkube-linux:
+	GOOS=linux $(GO) build -o $@ $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(EXEC_PKG)
 
 .PHONY: build-image
 build-image: context
