@@ -29,6 +29,7 @@ var (
 )
 
 func init() {
+
 	if dataDir := os.Getenv("ETCD_DATA_DIRECTORY"); len(dataDir) != 0 {
 		EtcdDataDirectory = dataDir
 	}

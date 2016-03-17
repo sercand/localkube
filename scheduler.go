@@ -20,7 +20,7 @@ func StartSchedulerServer() {
 	config := options.NewSchedulerServer()
 
 	// master details
-	config.Master = "http://127.0.0.1:8080"
+	config.Master = APIServerURL
 
 	// defaults from command
 	config.EnableProfiling = true
