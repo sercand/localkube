@@ -6,6 +6,7 @@ import (
 	"os"
 
 	apiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
+	etcdstorage "k8s.io/kubernetes/pkg/storage/etcd"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
 )
 
@@ -42,7 +43,9 @@ func StartAPIServer() {
 	config.InsecurePort = APIServerPort
 
 	// use localkube etcd
-	config.EtcdServerList = EtcdClientURLs
+	config.EtcdConfig = etcdstorage.EtcdConfig{
+		ServerList: EtcdClientURLs,
+	}
 
 	// set Service IP range
 	_, ipnet, err := net.ParseCIDR(ServiceIPRange)
