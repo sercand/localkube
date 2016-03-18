@@ -11,8 +11,8 @@ BUILDER ?=
 GOFILES := find . -name '*.go' -not -path "./vendor/*"
 GOOS := $(shell go list -f '{{context.GOOS}}')
 
-GOBUILD_LDFLAGS ?= --ldflags '-extldflags "-static"'
-GOBUILD_FLAGS ?= -a -v
+GOBUILD_LDFLAGS ?= --ldflags '-extldflags "-static" --s'
+GOBUILD_FLAGS ?= -i -v
 
 PKG ?= rsprd.com/localkube
 EXEC_PKG := $(PKG)/cmd/localkube
@@ -21,7 +21,7 @@ DOCKER_DIR := /go/src/$(PKG)
 MNT_ROOT ?= -v "/:/rootfs:ro"
 MNT_SYS ?= -v "/sys:/sys:ro"
 MNT_DOCKER_LIB ?= -v "/var/lib/docker:/var/lib/docker" -v "/mnt/sda1/var/lib/docker:/mnt/sda1/var/lib/docker"
-MNT_KUBELET_LIB ?= -v "/mnt/sda1/var/lib/kubelet:/var/lib/kubelet"
+MNT_KUBELET_LIB ?= -v "/var/lib/kubelet:/var/lib/kubelet"
 MNT_RUN ?= -v "/var/run:/var/run:rw"
 
 MNT_REPO ?= -v "$(mkfile_dir):$(DOCKER_DIR)"
@@ -84,7 +84,14 @@ checkgofmt:
 		  exit 1; \
 		  fi;
 
-.PHONY: deps
-deps:
-	go get github.com/tools/godep
-	$(GODEP) restore -v
+.PHONY: godep
+godep:
+	go get -u -v github.com/tools/godep
+	@echo "Recalculating godeps, removing Godeps and vendor if not canceled in 5 seconds"
+	@sleep 5
+	rm -rf Godeps vendor
+	GO15VENDOREXPERIMENT="1" godep save -v . ./cmd/localkube
+
+	@echo "Applying hack to prevent golang.org/x/net/trace from running init block."
+	@echo "This conflicts with a duplicate import by etcd"
+	git checkout 37c71fd vendor/golang.org/x/net/trace/trace.go

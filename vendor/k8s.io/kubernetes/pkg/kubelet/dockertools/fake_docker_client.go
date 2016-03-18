@@ -56,12 +56,36 @@ type FakeDockerClient struct {
 }
 
 func NewFakeDockerClient() *FakeDockerClient {
+	return NewFakeDockerClientWithVersion("1.8.1", "1.20")
+}
+
+func NewFakeDockerClientWithVersion(version, apiVersion string) *FakeDockerClient {
 	return &FakeDockerClient{
-		VersionInfo:   docker.Env{"Version=1.8.1", "ApiVersion=1.20"},
+		VersionInfo:   docker.Env{fmt.Sprintf("Version=%s", version), fmt.Sprintf("ApiVersion=%s", apiVersion)},
 		Errors:        make(map[string]error),
 		RemovedImages: sets.String{},
 		ContainerMap:  make(map[string]*docker.Container),
 	}
+}
+
+func (f *FakeDockerClient) InjectError(fn string, err error) {
+	f.Lock()
+	defer f.Unlock()
+	f.Errors[fn] = err
+}
+
+func (f *FakeDockerClient) InjectErrors(errs map[string]error) {
+	f.Lock()
+	defer f.Unlock()
+	for fn, err := range errs {
+		f.Errors[fn] = err
+	}
+}
+
+func (f *FakeDockerClient) ClearErrors() {
+	f.Lock()
+	defer f.Unlock()
+	f.Errors = map[string]error{}
 }
 
 func (f *FakeDockerClient) ClearCalls() {
@@ -378,7 +402,7 @@ func (f *FakeDockerClient) PullImage(opts docker.PullImageOptions, auth docker.A
 }
 
 func (f *FakeDockerClient) Version() (*docker.Env, error) {
-	return &f.VersionInfo, nil
+	return &f.VersionInfo, f.popError("version")
 }
 
 func (f *FakeDockerClient) Info() (*docker.Env, error) {

@@ -3,7 +3,6 @@ package localkube
 import (
 	kubelet "k8s.io/kubernetes/cmd/kubelet/app"
 	"k8s.io/kubernetes/cmd/kubelet/app/options"
-	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 )
 
 const (
@@ -11,7 +10,7 @@ const (
 )
 
 var (
-	DockerDaemonSock = "unix:///var/run/weave/weave.sock"
+	WeaveProxySock = "unix:///var/run/weave/weave.sock"
 )
 
 func NewKubeletServer() Server {
@@ -27,12 +26,12 @@ func StartKubeletServer() {
 	// master details
 	config.APIServerList = []string{APIServerURL}
 
+	// Docker
 	config.Containerized = true
-	config.ResolverConfig = "/dev/null"
+	config.DockerEndpoint = WeaveProxySock
 
-	// defaults from command
-	config.ResolverConfig = kubetypes.ResolvConfDefault
-	config.DockerEndpoint = DockerDaemonSock
+	// Networking
+	config.ResolverConfig = "/dev/null"
 
 	go kubelet.Run(config, nil)
 }
