@@ -6,8 +6,8 @@ import (
 	"os"
 
 	apiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
-	etcdstorage "k8s.io/kubernetes/pkg/storage/etcd"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
+	etcdstorage "k8s.io/kubernetes/pkg/storage/etcd"
 )
 
 const (
