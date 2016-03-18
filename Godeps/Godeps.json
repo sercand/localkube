@@ -1580,6 +1580,16 @@
 			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
 		},
 		{
+			"ImportPath": "k8s.io/kubernetes/cmd/kube-proxy/app",
+			"Comment": "v1.2.0",
+			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/cmd/kube-proxy/app/options",
+			"Comment": "v1.2.0",
+			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
+		},
+		{
 			"ImportPath": "k8s.io/kubernetes/cmd/kubelet/app",
 			"Comment": "v1.2.0",
 			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
@@ -2335,6 +2345,26 @@
 			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
 		},
 		{
+			"ImportPath": "k8s.io/kubernetes/pkg/proxy",
+			"Comment": "v1.2.0",
+			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/proxy/config",
+			"Comment": "v1.2.0",
+			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/proxy/iptables",
+			"Comment": "v1.2.0",
+			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/proxy/userspace",
+			"Comment": "v1.2.0",
+			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
+		},
+		{
 			"ImportPath": "k8s.io/kubernetes/pkg/quota",
 			"Comment": "v1.2.0",
 			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
@@ -2926,6 +2956,11 @@
 		},
 		{
 			"ImportPath": "k8s.io/kubernetes/pkg/util/sets",
+			"Comment": "v1.2.0",
+			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/util/slice",
 			"Comment": "v1.2.0",
 			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
 		},

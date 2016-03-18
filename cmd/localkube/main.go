@@ -34,6 +34,8 @@ func load() {
 	LK.Add(kubelet)
 
 	// proxy
+	proxy := localkube.NewProxyServer()
+	LK.Add(proxy)
 }
 
 func main() {
