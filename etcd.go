@@ -19,19 +19,19 @@ const (
 
 var (
 	// EtcdClientURLs have listeners created and handle etcd API traffic
-	EtcdClientURLs = []string{"http://localhost:2379"}
+	KubeEtcdClientURLs = []string{"http://localhost:2379"}
 
 	// EtcdPeerURLs don't have listeners created for them, they are used to pass Etcd validation
-	EtcdPeerURLs = []string{"http://localhost:2380"}
+	KubeEtcdPeerURLs = []string{"http://localhost:2380"}
 
 	// EtcdDataDirectory is where all state is stored. Can be changed with env var ETCD_DATA_DIRECTORY
-	EtcdDataDirectory = "/var/etcd/data"
+	KubeEtcdDataDirectory = "/var/etcd/data"
 )
 
 func init() {
 
-	if dataDir := os.Getenv("ETCD_DATA_DIRECTORY"); len(dataDir) != 0 {
-		EtcdDataDirectory = dataDir
+	if dataDir := os.Getenv("KUBE_ETCD_DATA_DIRECTORY"); len(dataDir) != 0 {
+		KubeEtcdDataDirectory = dataDir
 	}
 }
 
@@ -43,10 +43,16 @@ type EtcdServer struct {
 }
 
 // NewEtcd creates a new default etcd Server using 'dataDir' for persistence. Panics if could not be configured.
-func NewEtcd() *EtcdServer {
-	name := "default"
-	clientURLs := urlsOrPanic(EtcdClientURLs)
-	peerURLs := urlsOrPanic(EtcdPeerURLs)
+func NewEtcd(clientURLStrs, peerURLStrs []string, name, dataDirectory string) (*EtcdServer, error) {
+	clientURLs, err := types.NewURLs(clientURLStrs)
+	if err != nil {
+		return nil, err
+	}
+
+	peerURLs, err := types.NewURLs(peerURLStrs)
+	if err != nil {
+		return nil, err
+	}
 
 	urlsMap := map[string]types.URLs{
 		name: peerURLs,
@@ -56,7 +62,7 @@ func NewEtcd() *EtcdServer {
 		Name:               name,
 		ClientURLs:         clientURLs,
 		PeerURLs:           peerURLs,
-		DataDir:            EtcdDataDirectory,
+		DataDir:            dataDirectory,
 		InitialPeerURLsMap: urlsMap,
 		Transport:          http.DefaultTransport.(*http.Transport),
 
@@ -71,7 +77,7 @@ func NewEtcd() *EtcdServer {
 
 	return &EtcdServer{
 		config: config,
-	}
+	}, nil
 }
 
 // Starts starts the etcd server and listening for client connections
@@ -126,14 +132,6 @@ func (EtcdServer) Name() string {
 func (e *EtcdServer) requestTimeout() time.Duration {
 	// from github.com/coreos/etcd/etcdserver/config.go
 	return 5*time.Second + 2*time.Duration(e.config.ElectionTicks)*time.Duration(e.config.TickMs)*time.Millisecond
-}
-
-func urlsOrPanic(urlStrs []string) types.URLs {
-	urls, err := types.NewURLs(urlStrs)
-	if err != nil {
-		panic(err)
-	}
-	return urls
 }
 
 func createListenersOrPanic(urls types.URLs) (listeners []net.Listener) {

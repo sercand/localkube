@@ -8,13 +8,26 @@ import (
 	"rsprd.com/localkube"
 )
 
-var LK *localkube.LocalKube
+var (
+	LK *localkube.LocalKube
+
+	DNSDomain = "cluster.local"
+)
+
+func init() {
+	if name := os.Getenv("DNS_DOMAIN"); len(name) != 0 {
+		DNSDomain = name
+	}
+}
 
 func load() {
 	LK = new(localkube.LocalKube)
 
 	// setup etc
-	etcd := localkube.NewEtcd()
+	etcd, err := localkube.NewEtcd(localkube.KubeEtcdClientURLs, localkube.KubeEtcdPeerURLs, "kubeetcd", localkube.KubeEtcdDataDirectory)
+	if err != nil {
+		panic(err)
+	}
 	LK.Add(etcd)
 
 	// setup apiserver
@@ -36,6 +49,12 @@ func load() {
 	// proxy
 	proxy := localkube.NewProxyServer()
 	LK.Add(proxy)
+
+	dns, err := localkube.NewDNSServer(DNSDomain, localkube.APIServerURL)
+	if err != nil {
+		panic(err)
+	}
+	LK.Add(dns)
 }
 
 func main() {

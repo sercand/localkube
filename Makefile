@@ -11,7 +11,7 @@ BUILDER ?=
 GOFILES := find . -name '*.go' -not -path "./vendor/*"
 GOOS := $(shell go list -f '{{context.GOOS}}')
 
-GOBUILD_LDFLAGS ?= --ldflags '-extldflags "-static" --s'
+GOBUILD_LDFLAGS ?= --ldflags '-extldflags "-static" --s -w'
 GOBUILD_FLAGS ?= -i -v
 
 PKG ?= rsprd.com/localkube

@@ -44,7 +44,7 @@ func StartAPIServer() {
 
 	// use localkube etcd
 	config.EtcdConfig = etcdstorage.EtcdConfig{
-		ServerList: EtcdClientURLs,
+		ServerList: KubeEtcdClientURLs,
 	}
 
 	// set Service IP range
