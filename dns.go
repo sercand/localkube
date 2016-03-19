@@ -1,6 +1,8 @@
 package localkube
 
 import (
+	"fmt"
+	"os"
 	"time"
 
 	kube2sky "rsprd.com/localkube/k2s"
@@ -24,9 +26,10 @@ type DNSServer struct {
 	etcd     *EtcdServer
 	sky      runner
 	kube2sky func() error
+	done     chan struct{}
 }
 
-func NewDNSServer(rootDomain, kubeAPIServer string) (*DNSServer, error) {
+func NewDNSServer(rootDomain, serverAddress, kubeAPIServer string) (*DNSServer, error) {
 	// setup backing etcd store
 	peerURLs := []string{"http://localhost:9256"}
 	etcdServer, err := NewEtcd(DNSEtcdURLs, peerURLs, DNSName, DNSEtcdDataDirectory)
@@ -37,7 +40,7 @@ func NewDNSServer(rootDomain, kubeAPIServer string) (*DNSServer, error) {
 	// setup skydns
 	etcdClient := etcd.NewClient(DNSEtcdURLs)
 	skyConfig := &skydns.Config{
-		DnsAddr: "0.0.0.0:53",
+		DnsAddr: serverAddress,
 		Domain:  rootDomain,
 	}
 
@@ -49,6 +52,10 @@ func NewDNSServer(rootDomain, kubeAPIServer string) (*DNSServer, error) {
 	})
 	skyServer := skydns.New(backend, skyConfig)
 
+	// setup so prometheus doesn't run into nil
+	skydns.Metrics()
+
+	// setup kube2sky
 	k2s := kube2sky.NewKube2Sky(rootDomain, DNSEtcdURLs[0], "", kubeAPIServer, 10*time.Second, 8081)
 
 	return &DNSServer{
@@ -58,15 +65,32 @@ func NewDNSServer(rootDomain, kubeAPIServer string) (*DNSServer, error) {
 	}, nil
 }
 
-func (*DNSServer) Start() {}
+func (dns *DNSServer) Start() {
+	if dns.done != nil {
+		fmt.Fprint(os.Stderr, pad("DNS server already started"))
+		return
+	}
 
-func (*DNSServer) Stop() {
-	println("DNS currently can't be stopped.")
+	dns.done = make(chan struct{})
+
+	dns.etcd.Start()
+	go until(dns.kube2sky, os.Stderr, "kube2sky", 2*time.Second, dns.done)
+	go until(dns.sky.Run, os.Stderr, "skydns", 1*time.Second, dns.done)
+}
+
+func (dns *DNSServer) Stop() {
+	// closing chan will prevent servers from restarting but will not kill running server
+	close(dns.done)
+
+	dns.etcd.Stop()
 }
 
 // Status is currently not support by DNSServer
-func (DNSServer) Status() Status {
-	return NotImplemented
+func (dns *DNSServer) Status() Status {
+	if dns.done == nil {
+		return Stopped
+	}
+	return Started
 }
 
 // Name returns the servers unique name

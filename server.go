@@ -2,6 +2,8 @@ package localkube
 
 import (
 	"fmt"
+	"io"
+	"time"
 )
 
 // Server represents a component that Kubernetes depends on. It allows for the management of
@@ -131,3 +133,29 @@ const (
 	// NotImplemented is returned when Status cannot be determined.
 	NotImplemented = "NotImplemented"
 )
+
+// until endlessly loops the provided function until a message is received on the done channel.
+// The function will wait the duration provided in sleep between function calls. Errors will be sent on provider Writer.
+func until(fn func() error, w io.Writer, name string, sleep time.Duration, done <-chan struct{}) {
+	var exitErr error
+	for {
+		select {
+		case <-done:
+			return
+		default:
+			exitErr = fn()
+			if exitErr == nil {
+				fmt.Fprintf(w, pad("%s: Exited with no errors.\n"), name)
+			} else {
+				fmt.Fprintf(w, pad("%s: Exit with error: %v"), name, exitErr)
+			}
+
+			// wait provided duration before trying again
+			time.Sleep(sleep)
+		}
+	}
+}
+
+func pad(str string) string {
+	return fmt.Sprint("\n%s\n", str)
+}

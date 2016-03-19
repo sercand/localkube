@@ -11,7 +11,8 @@ import (
 var (
 	LK *localkube.LocalKube
 
-	DNSDomain = "cluster.local"
+	DNSDomain    = "cluster.local"
+	ClusterDNSIP = "10.30.0.3"
 )
 
 func init() {
@@ -43,14 +44,14 @@ func load() {
 	LK.Add(scheduler)
 
 	// setup kubelet (configured for weave proxy)
-	kubelet := localkube.NewKubeletServer()
+	kubelet := localkube.NewKubeletServer(DNSDomain, ClusterDNSIP)
 	LK.Add(kubelet)
 
 	// proxy
 	proxy := localkube.NewProxyServer()
 	LK.Add(proxy)
 
-	dns, err := localkube.NewDNSServer(DNSDomain, localkube.APIServerURL)
+	dns, err := localkube.NewDNSServer(DNSDomain, "0.0.0.0:1970", localkube.APIServerURL)
 	if err != nil {
 		panic(err)
 	}

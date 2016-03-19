@@ -13,14 +13,14 @@ var (
 	WeaveProxySock = "unix:///var/run/weave/weave.sock"
 )
 
-func NewKubeletServer() Server {
+func NewKubeletServer(clusterDomain, clusterDNS string) Server {
 	return SimpleServer{
 		ComponentName: KubeletName,
-		StartupFn:     StartKubeletServer,
+		StartupFn:     StartKubeletServer(clusterDomain, clusterDNS),
 	}.NoShutdown()
 }
 
-func StartKubeletServer() {
+func StartKubeletServer(clusterDomain, clusterDNS string) func() {
 	config := options.NewKubeletServer()
 
 	// master details
@@ -31,7 +31,11 @@ func StartKubeletServer() {
 	config.DockerEndpoint = WeaveProxySock
 
 	// Networking
+	config.ClusterDomain = clusterDomain
+	config.ClusterDNS = clusterDNS
 	config.ResolverConfig = "/dev/null"
 
-	go kubelet.Run(config, nil)
+	return func() {
+		go kubelet.Run(config, nil)
+	}
 }
