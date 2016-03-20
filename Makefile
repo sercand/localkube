@@ -67,6 +67,10 @@ build-image: context
 run-image: build-image
 	$(DOCKER) run -it $(DOCKER_OPTS) $(DOCKER_RUN_OPTS) $(DOCKER_IMAGE_NAME)
 
+.PHONY: push-image
+push-image: build-image
+	$(DOCKER) $(DOCKER_OPTS) push $(DOCKER_IMAGE_NAME)
+
 .PHONY: context
 context: build/localkube-linux
 	rm -rf ./build/context
