@@ -14,3 +14,5 @@ ip=$(ip -4 addr show dev docker0 | grep -m1 -o 'inet [.0-9]*' | sed 's/inet \([.
 export DNS_SERVER=$ip:1970
 
 localkube start
+
+weave stop

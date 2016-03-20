@@ -29,10 +29,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/signal"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	etcd "github.com/coreos/go-etcd/etcd"

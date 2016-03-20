@@ -28,6 +28,7 @@ func NewKubeletServer(clusterDomain, clusterDNS string) Server {
 }
 
 func StartKubeletServer(clusterDomain, clusterDNS string) func() {
+	KubeletStop = make(chan struct{})
 	config := options.NewKubeletServer()
 
 	// master details

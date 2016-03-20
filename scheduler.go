@@ -26,6 +26,7 @@ func NewSchedulerServer() Server {
 }
 
 func StartSchedulerServer() {
+	SchedulerStop = make(chan struct{})
 	config := options.NewSchedulerServer()
 
 	// master details

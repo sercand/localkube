@@ -41,6 +41,7 @@ func NewAPIServer() Server {
 }
 
 func StartAPIServer() {
+	APIServerStop = make(chan struct{})
 	config := options.NewAPIServer()
 
 	// use host/port from vars

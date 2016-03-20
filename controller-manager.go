@@ -27,6 +27,7 @@ func NewControllerManagerServer() Server {
 }
 
 func StartControllerManagerServer() {
+	CMStop = make(chan struct{})
 	config := options.NewCMServer()
 
 	// defaults from command
