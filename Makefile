@@ -19,7 +19,7 @@ EXEC_PKG := $(PKG)/cmd/localkube
 DOCKER_DIR := /go/src/$(PKG)
 
 MNT_ROOT ?= -v "/:/rootfs:ro"
-MNT_SYS ?= -v "/sys:/sys:ro"
+MNT_SYS ?= -v "/sys:/sys:rw"
 MNT_DOCKER_LIB ?= -v "/var/lib/docker:/var/lib/docker" -v "/mnt/sda1/var/lib/docker:/mnt/sda1/var/lib/docker"
 MNT_KUBELET_LIB ?= -v "/var/lib/kubelet:/var/lib/kubelet"
 MNT_RUN ?= -v "/var/run:/var/run:rw"

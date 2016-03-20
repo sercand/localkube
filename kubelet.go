@@ -33,7 +33,9 @@ func StartKubeletServer(clusterDomain, clusterDNS string) func() {
 	// Networking
 	config.ClusterDomain = clusterDomain
 	config.ClusterDNS = clusterDNS
-	config.ResolverConfig = "/dev/null"
+
+	// use hosts resolver config
+	config.ResolverConfig = "/rootfs/etc/resolv.conf"
 
 	return func() {
 		go kubelet.Run(config, nil)

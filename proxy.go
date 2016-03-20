@@ -1,31 +1,52 @@
 package localkube
 
 import (
+	"os"
+	"time"
+
 	kubeproxy "k8s.io/kubernetes/cmd/kube-proxy/app"
 	"k8s.io/kubernetes/cmd/kube-proxy/app/options"
+	"k8s.io/kubernetes/pkg/apis/componentconfig"
+	"k8s.io/kubernetes/pkg/kubelet/qos"
 )
 
 const (
 	ProxyName = "proxy"
 )
 
+var (
+	MasqueradeBit = 14
+	ProxyStop     chan struct{}
+)
+
 func NewProxyServer() Server {
-	return SimpleServer{
+	return &SimpleServer{
 		ComponentName: ProxyName,
 		StartupFn:     StartProxyServer,
-	}.NoShutdown()
+		ShutdownFn: func() {
+			close(ProxyStop)
+		},
+	}
 }
 
 func StartProxyServer() {
+	ProxyStop = make(chan struct{})
 	config := options.NewProxyConfig()
 
 	// master details
 	config.Master = APIServerURL
+
+	config.Mode = componentconfig.ProxyModeIPTables
+
+	// defaults
+	oom := qos.KubeProxyOOMScoreAdj
+	config.OOMScoreAdj = &oom
+	config.IPTablesMasqueradeBit = &MasqueradeBit
 
 	server, err := kubeproxy.NewProxyServerDefault(config)
 	if err != nil {
 		panic(err)
 	}
 
-	go server.Run()
+	go until(server.Run, os.Stdout, ProxyName, 200*time.Millisecond, ProxyStop)
 }

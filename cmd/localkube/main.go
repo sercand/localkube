@@ -12,7 +12,7 @@ var (
 	LK *localkube.LocalKube
 
 	DNSDomain    = "cluster.local"
-	ClusterDNSIP = "10.30.0.3"
+	ClusterDNSIP = "10.1.30.3"
 )
 
 func init() {
