@@ -31,7 +31,7 @@ DOCKER_OPTS_KUBELET_VOLS ?= $(MNT_ROOT) $(MNT_SYS) $(MNT_DOCKER_LIB) $(MNT_KUBEL
 DOCKER_RUN_OPTS ?= $(DOCKER_OPTS_KUBELET_VOLS) --privileged="true" --net="host" --pid="host"
 
 # image data
-ORG ?= ethernetdan
+ORG ?= redspreadapps
 NAME ?= localkube
 TAG ?= latest
 
