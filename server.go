@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io"
 	"time"
+
+	kuberest "k8s.io/kubernetes/pkg/client/restclient"
+	kubeclient "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 // Server represents a component that Kubernetes depends on. It allows for the management of
@@ -158,4 +161,15 @@ func until(fn func() error, w io.Writer, name string, sleep time.Duration, done 
 
 func pad(str string) string {
 	return fmt.Sprint("\n%s\n", str)
+}
+
+func kubeClient() *kubeclient.Client {
+	config := &kuberest.Config{
+		Host: APIServerURL,
+	}
+	client, err := kubeclient.New(config)
+	if err != nil {
+		panic(err)
+	}
+	return client
 }

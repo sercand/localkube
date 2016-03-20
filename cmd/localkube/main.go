@@ -11,13 +11,18 @@ import (
 var (
 	LK *localkube.LocalKube
 
-	DNSDomain    = "cluster.local"
-	ClusterDNSIP = "10.1.30.3"
+	DNSDomain     = "cluster.local"
+	ClusterDNSIP  = "10.1.30.3"
+	DNSServerAddr = "172.17.0.1:1970"
 )
 
 func init() {
 	if name := os.Getenv("DNS_DOMAIN"); len(name) != 0 {
 		DNSDomain = name
+	}
+
+	if addr := os.Getenv("DNS_SERVER"); len(addr) != 0 {
+		DNSServerAddr = addr
 	}
 }
 
@@ -51,7 +56,7 @@ func load() {
 	proxy := localkube.NewProxyServer()
 	LK.Add(proxy)
 
-	dns, err := localkube.NewDNSServer(DNSDomain, "0.0.0.0:1970", localkube.APIServerURL)
+	dns, err := localkube.NewDNSServer(DNSDomain, ClusterDNSIP, DNSServerAddr, localkube.APIServerURL)
 	if err != nil {
 		panic(err)
 	}

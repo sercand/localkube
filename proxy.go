@@ -36,7 +36,8 @@ func StartProxyServer() {
 	// master details
 	config.Master = APIServerURL
 
-	config.Mode = componentconfig.ProxyModeIPTables
+	// TODO: investigate why IP tables is not working
+	config.Mode = componentconfig.ProxyModeUserspace
 
 	// defaults
 	oom := qos.KubeProxyOOMScoreAdj
