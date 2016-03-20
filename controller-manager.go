@@ -1,6 +1,9 @@
 package localkube
 
 import (
+	"os"
+	"time"
+
 	controllerManager "k8s.io/kubernetes/cmd/kube-controller-manager/app"
 	"k8s.io/kubernetes/cmd/kube-controller-manager/app/options"
 )
@@ -9,11 +12,18 @@ const (
 	ControllerManagerName = "controller-manager"
 )
 
+var (
+	CMStop chan struct{}
+)
+
 func NewControllerManagerServer() Server {
-	return SimpleServer{
+	return &SimpleServer{
 		ComponentName: ControllerManagerName,
 		StartupFn:     StartControllerManagerServer,
-	}.NoShutdown()
+		ShutdownFn: func() {
+			close(CMStop)
+		},
+	}
 }
 
 func StartControllerManagerServer() {
@@ -24,6 +34,10 @@ func StartControllerManagerServer() {
 	config.DeletingPodsBurst = 10
 	config.EnableProfiling = true
 
+	fn := func() error {
+		return controllerManager.Run(config)
+	}
+
 	// start controller manager in it's own goroutine
-	go controllerManager.Run(config)
+	go until(fn, os.Stdout, ControllerManagerName, 200*time.Millisecond, SchedulerStop)
 }

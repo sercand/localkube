@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	apiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
@@ -19,6 +20,7 @@ const (
 var (
 	APIServerURL   string
 	ServiceIPRange = "10.1.30.0/24"
+	APIServerStop  chan struct{}
 )
 
 func init() {
@@ -29,10 +31,13 @@ func init() {
 }
 
 func NewAPIServer() Server {
-	return SimpleServer{
+	return &SimpleServer{
 		ComponentName: APIServerName,
 		StartupFn:     StartAPIServer,
-	}.NoShutdown()
+		ShutdownFn: func() {
+			close(APIServerStop)
+		},
+	}
 }
 
 func StartAPIServer() {
@@ -59,6 +64,10 @@ func StartAPIServer() {
 	config.EnableWatchCache = true
 	config.MinRequestTimeout = 1800
 
+	fn := func() error {
+		return apiserver.Run(config)
+	}
+
 	// start API server in it's own goroutine
-	go apiserver.Run(config)
+	go until(fn, os.Stdout, APIServerName, 200*time.Millisecond, SchedulerStop)
 }

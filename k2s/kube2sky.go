@@ -627,22 +627,6 @@ func waitForKubernetesService(client *kclient.Client) (svc *kapi.Service) {
 	return
 }
 
-// setupSignalHandlers runs a goroutine that waits on SIGINT or SIGTERM and logs it
-// before exiting.
-func setupSignalHandlers() {
-	sigChan := make(chan os.Signal)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	// This program should always exit gracefully logging that it received
-	// either a SIGINT or SIGTERM. Since kube2sky is run in a container
-	// without a liveness probe as part of the kube-dns pod, it shouldn't
-	// restart unless the pod is deleted. If it restarts without logging
-	// anything it means something is seriously wrong.
-	// TODO: Remove once #22290 is fixed.
-	go func() {
-		glog.Fatalf("Received signal %s", <-sigChan)
-	}()
-}
-
 // setupHealthzHandlers sets up a readiness and liveness endpoint for kube2sky.
 func setupHealthzHandlers(ks *kube2sky) {
 	http.HandleFunc("/readiness", func(w http.ResponseWriter, req *http.Request) {
@@ -654,7 +638,6 @@ func setupHealthzHandlers(ks *kube2sky) {
 func main() error {
 	// REDSPREAD CHANGE: Removed flag initialization
 	var err error
-	setupSignalHandlers()
 	// TODO: Validate input flags.
 	domain := *argDomain
 	if !strings.HasSuffix(domain, ".") {
