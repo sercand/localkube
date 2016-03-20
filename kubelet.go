@@ -1,6 +1,9 @@
 package localkube
 
 import (
+	"os"
+	"time"
+
 	kubelet "k8s.io/kubernetes/cmd/kubelet/app"
 	"k8s.io/kubernetes/cmd/kubelet/app/options"
 )
@@ -11,16 +14,21 @@ const (
 
 var (
 	WeaveProxySock = "unix:///var/run/weave/weave.sock"
+	KubeletStop    chan struct{}
 )
 
 func NewKubeletServer(clusterDomain, clusterDNS string) Server {
-	return SimpleServer{
+	return &SimpleServer{
 		ComponentName: KubeletName,
 		StartupFn:     StartKubeletServer(clusterDomain, clusterDNS),
-	}.NoShutdown()
+		ShutdownFn: func() {
+			close(KubeletStop)
+		},
+	}
 }
 
 func StartKubeletServer(clusterDomain, clusterDNS string) func() {
+	KubeletStop = make(chan struct{})
 	config := options.NewKubeletServer()
 
 	// master details
@@ -37,7 +45,11 @@ func StartKubeletServer(clusterDomain, clusterDNS string) func() {
 	// use hosts resolver config
 	config.ResolverConfig = "/rootfs/etc/resolv.conf"
 
+	schedFn := func() error {
+		return kubelet.Run(config, nil)
+	}
+
 	return func() {
-		go kubelet.Run(config, nil)
+		go until(schedFn, os.Stdout, KubeletName, 200*time.Millisecond, KubeletStop)
 	}
 }
