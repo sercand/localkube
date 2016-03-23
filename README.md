@@ -43,7 +43,7 @@ It's great for:
 
 For those interested in contributing to development, this will compile localkube executable, build an image with it inside, and run a container with the build image.
 
-The `docker` command should be setup for the Docker daemon you want the run the cluster with.
+The `docker` command should be setup for the Docker daemon you want to run the cluster with.
 
 **Linux**
 ```bash
@@ -65,4 +65,4 @@ Setting up a remote Kubernetes cluster takes too long, and you can't develop and
 
 **Why not use `hyperkube` or `monokube` for local dev?**
 
-We built localkube to integrate with `spread` for an interative workflow when developing with Kubernetes. localkube is built as a full Kubernetes 1.2 cluster, has pod networking set up with Weave, and uses `spread` for a rapid development workflow.
+We built localkube to integrate with `spread` for an interactive workflow when developing with Kubernetes. localkube is built as a full Kubernetes 1.2 cluster, has pod networking set up with Weave, and uses `spread` for a rapid development workflow.
