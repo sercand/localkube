@@ -1,5 +1,13 @@
 language: go
 sudo: required
+
+env:
+  global:
+  # Docker Credentials
+  - secure: fiLRGSypZCwGdVdrW8DrwINd/xR1l1qKaXb6RI96OUMKhlGpWQqcr21ZRsowXARpo94DGosSHiTIBB5A6TfTvZPfMN06Fm7Z2VOMFCfi1ewjG47HXnTLpyCGFDmLOSQOK+BVpg3+grG933nJxy42093mPAobDK9g5cvI89w8HV8SO05Be3PHIcAqFlgXwhxPPOYVss3jAGZRS6SPz6H56A2GsTafuvaWPJbw5cAddAiCYDB/w1bIDC78e1kGzCxH2j9Y4E+SpsyRiE2PcpbmpmG9UZ0I1nYeGbVbP8+HuFik9pARi+SZ/ze1X7DFkavXXiL9q9XMGClF4Dc54sepZO3AJRJ7hcQBX1YkzmbDLjcngkQyC0na6dQMf7xVvaVVeffqcXdVjmgRtuCpg3NCe/K4pcXqrIY7k1XsvJb19xHC/7+TLJxSnRGVxpLtypZsWYtNYFF7mkNto25WJ2t+7J4LBgYLts33K3iiP4Hsg/3cNRxrqm+9xsM7d2ByXaRY8zWbmct2wDybCeg0dOHJ+x+WmdHxKsqAKiArYU7vldpGw+q1V8Ll+AEdR5MCleriw9Vi7eq/Oq/Pd1qYDPZUT9bf2JkAc3HvWALDMofxvkSX8M0mi3IrPWg/DLLL4kyBF2EtvQQqvZ4qKBS1XQCQZ0pM6F2pi2MbbJUj2ry0fA0=
+  - secure: pocM6+0wGXnQ3Y5v3RMegQkhyqmIdNXIbz1v4a756HOwlAr77JExPkMl4RAu5iv1PtjEwA/ih9tYD0VSGhZ3fQbnIsCEbwXs2SIPJy+6juzqLUacpnQPrk91jzm+IRep6CKxnOa7SJqldFHGXZyqYD8OKx2xrw0Bb+84EGVF1cCwuca0qTqLOxVeXtqLggYAR9EKGXUHUY6TQ31wL6JNmyC+8O6PugS01z2PlHAPQqkW2BR0OoEbJfKvEFjcyc7DYj19UBegGTdqtIbjB8c1KE6lNGeSpCO0tw4ROJaAd8VdvM4K44vyM3hZnMEE1GyW8WbIkSsYTvt5yvViLZTEEabmvIJlDvkOZUx8E39a9kbOQc+KW1cQ5TmWlPPjVYh86UdCrtWNCnAaaG+LOKGbvjN7EZCV/SQC+Rk8ZiUpwUZd4Yxz4RfvqW/yiT403J/T12Es3fzNXadojg6OARpAOH4OoN+6O8iarg0Wsl0SK022pw7h3xhVjkWb0zYhrb/tBBhHSD6IZ95TCcfGHj34El8sS/31ucovoUHA54oDsEIwiHevte8hlYz7Zjudo/67oU6guSstqhyOfgHFF2YuUHn5Y+yG85KHIpaVZpZoo9jn7BxugNBl8e2YA+JNXH2x7lI2MH1WCvxx642blh8ANlhw4qatHIRkphK4B89euRQ=
+  - secure: OrUbh0GtksmNydAWJgL4D1AOfu/9RlVsFIen8uICsxbfSQQCalMriGeaxetlhzXOBM1Al4PLIztzg3JYa9eSqwptyTPTYc0cunuF1dbfy3YCfTN7gVuluJNNSx3S1HOcyDC0mvhxW1pSwDi4gGo46KNlFTuEvc+eW5cDvYhMNcgT90+CPRnTkwbiuk953llrkwQFgWTDMqsKTdSA8wDU9/ee3nxmTfSVisPYMmr/UB6T0UAFbnc4fNRgt4ZpAr5u11KWXcFy9iWWdwMR33Pqy5Vd+kWqiYGt88lem37c5b9Zv2q55m/odThFKcSEcY+IrXKUKfXlYpLT9jrPzYked8VBJi7YWWcVH56Ge4kdlbTxh6r6Wfv/4tmU686JmYcVg3XzsLt6hhrXHPI66QqnZ9Mhj3NGcUOXD5M25qaXIGIp1QhZ9Z7ZKK3bZV4xsGsm8xmMkpRuUMb7MsWAmagD6QZQ8NERoR8CfkOmr5Dn8kpTeAf5Smj3sB4f8SEtyEmHyBCSpuJdA/qdygkTi6qoLMYSE7fqwsSbyp83PYQjVxvanpJG5gItH/rexKTR2YMvpeob0738dc1iRwA440SSnbZhmiQtjo3aOw+4MyfLUDxadmuRU31H6ucVjDLgnTUxrnneuKoR6fYby2hkBMn6m5CYyN4PMAsZC4Ye0K5mJuw=
+
 go:
   - 1.6
 
@@ -17,4 +25,19 @@ script:
   - make build
 
 after_success:
-  - make build-image
+  # If release then build + push image, if not just build
+  - |
+    if [ -n "$TRAVIS_TAG" ]; then
+      docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+      TAG=$TRAVIS_TAG make push-image push-latest;
+    else
+      make build-image;
+    fi
+
+deploy:
+  provider: releases
+  api_key:
+    secure: t/YDOTLHHts4nDOdhp1nFuPcMSo4J6J6VX7BBdznPEN+VeCw0gYOCuHos/gZ9FghQOMnIzSIsAED7Ab1DG481He4zroWiiVeM0QuR1/AZjnWmuMswg8/KPkokAxbW0nyBsiBldfYL+lV07YA4ARQHBNZVVWZXW/FYmwLDoDvU3LVXXVGE886p4bIL0eqktg1LSj3d4E5S4YS6MKguNMFmoip6IiaqIkMXhhAKyUnQeHiEseEgIz4WxzWRuWUNOdda7BlCQZhlArjQfT62tIykymignOU3S63jXgM4AL6vDyuKG6fgTrtt473SWH5SaDobarE9k1CEb/ZxMNW6hZHrqIuUDqdtrh0liQZOTYN4zb6oHDHT1LZ0f269neaW6gtV/yjUz33kA7p5hrJepEFlupvwZq6BYpLcijVrpEuAwpxRiVBMAFuchGZ2RPKHAL+zOprsqEpmgKPvRM/r/iQbxpuPESr8hqYjxBYsAZVTsFWZ0B54Gnb0AkcNtJCAbN9F576zJMu++Ogb3xrcnApcbBCeuEe/5IE21Zjm3H7ATW54OP9sJQM7pYCKeZwib1+uL0OWc4wv50w+Uwxrp28BN942iazgatQIFf40lnZXcgKv+hqlmY+fJB4y/vWEyK2xaRDvbGsls+wD/weJXdi3Qr3NRQYJqOjwZBi20kep+g=
+  file: ./build/localkube-linux
+  on:
+    tags: true

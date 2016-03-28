@@ -71,6 +71,11 @@ run-image: build-image
 push-image: build-image
 	$(DOCKER) $(DOCKER_OPTS) push $(DOCKER_IMAGE_NAME)
 
+.PHONY: push-latest
+push-latest: build-image
+	$(DOCKER) $(DOCKER_OPTS) tag $(DOCKER_IMAGE_NAME) $(ORG)/$(NAME):latest
+	$(DOCKER) $(DOCKER_OPTS) push $(ORG)/$(NAME):latest
+
 .PHONY: context
 context: build/localkube-linux
 	rm -rf ./build/context
