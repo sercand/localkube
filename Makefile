@@ -99,7 +99,7 @@ godep:
 	@echo "Recalculating godeps, removing Godeps and vendor if not canceled in 5 seconds"
 	@sleep 5
 	rm -rf Godeps vendor
-	GO15VENDOREXPERIMENT="1" godep save -v . ./cmd/localkube
+	GO15VENDOREXPERIMENT="1" godep save -v . ./cmd/localkube ./pkg/...
 
 	@echo "Applying hack to prevent golang.org/x/net/trace from running init block."
 	@echo "This conflicts with a duplicate import by etcd"

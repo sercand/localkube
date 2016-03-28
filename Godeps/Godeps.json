@@ -1,10 +1,10 @@
 {
 	"ImportPath": "rsprd.com/localkube",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v60",
 	"Packages": [
 		".",
-		"./cmd/localkube"
+		"./cmd/localkube",
+		"./pkg/..."
 	],
 	"Deps": [
 		{
@@ -2175,6 +2175,16 @@
 		},
 		{
 			"ImportPath": "k8s.io/kubernetes/pkg/kubectl",
+			"Comment": "v1.2.0",
+			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/kubectl/cmd/config",
+			"Comment": "v1.2.0",
+			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/kubectl/cmd/util",
 			"Comment": "v1.2.0",
 			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
 		},
