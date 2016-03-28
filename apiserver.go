@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	apiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
@@ -71,4 +72,12 @@ func StartAPIServer() {
 
 	// start API server in it's own goroutine
 	go until(fn, os.Stdout, APIServerName, 200*time.Millisecond, SchedulerStop)
+}
+
+// notFoundErr returns true if the passed error is an API server object not found error
+func notFoundErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.HasSuffix(err.Error(), "not found")
 }
