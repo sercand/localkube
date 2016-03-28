@@ -12,6 +12,7 @@ import (
 	backendetcd "github.com/skynetservices/skydns/backends/etcd"
 	skydns "github.com/skynetservices/skydns/server"
 	kube "k8s.io/kubernetes/pkg/api"
+	kubeclient "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/util/intstr"
 )
 
@@ -94,14 +95,53 @@ func (dns *DNSServer) Start() {
 
 	go func() {
 		var err error
+		client := kubeClient()
+
+		meta := kube.ObjectMeta{
+			Name:      DNSServiceName,
+			Namespace: DNSServiceNamespace,
+			Labels: map[string]string{
+				"k8s-app":                       "kube-dns",
+				"kubernetes.io/cluster-service": "true",
+				"kubernetes.io/name":            "KubeDNS",
+			},
+		}
+
 		for {
-			err = setupService(dns.clusterIP, dns.dnsServerAddr.IP.String(), dns.dnsServerAddr.Port)
-			if err == nil {
-				return
+			if err != nil {
+				time.Sleep(2 * time.Second)
 			}
 
-			fmt.Printf("Failed to create service+endpoint for DNS: %v\n", err)
-			time.Sleep(2 * time.Second)
+			// setup service
+			if _, err = client.Services(meta.Namespace).Get(meta.Name); notFoundErr(err) {
+				// create service if doesn't exist
+				err = createService(client, meta, dns.clusterIP, dns.dnsServerAddr.Port)
+				if err != nil {
+					fmt.Printf("Failed to create Service for DNS: %v\n", err)
+					continue
+				}
+			} else if err != nil {
+				// error if cannot check for Service
+				fmt.Printf("Failed to check for DNS Service existence: %v\n", err)
+				continue
+			}
+
+			// setup endpoint
+			if _, err = client.Endpoints(meta.Namespace).Get(meta.Name); notFoundErr(err) {
+				// create endpoint if doesn't exist
+				err = createEndpoint(client, meta, dns.dnsServerAddr.IP.String(), dns.dnsServerAddr.Port)
+				if err == nil {
+					fmt.Printf("Failed to create Endpoint for DNS: %v\n", err)
+					continue
+				}
+			} else if err != nil {
+				// error if cannot check for Endpoint
+				fmt.Printf("Failed to check for DNS Endpoint existence: %v\n", err)
+				continue
+			}
+
+			// setup successful
+			break
 		}
 	}()
 
@@ -134,19 +174,7 @@ type runner interface {
 	Run() error
 }
 
-func setupService(clusterIP, dnsIP string, dnsPort int) error {
-	client := kubeClient()
-
-	meta := kube.ObjectMeta{
-		Name:      DNSServiceName,
-		Namespace: DNSServiceNamespace,
-		Labels: map[string]string{
-			"k8s-app":                       "kube-dns",
-			"kubernetes.io/cluster-service": "true",
-			"kubernetes.io/name":            "KubeDNS",
-		},
-	}
-
+func createService(client *kubeclient.Client, meta kube.ObjectMeta, clusterIP string, dnsPort int) error {
 	service := &kube.Service{
 		ObjectMeta: meta,
 		Spec: kube.ServiceSpec{
@@ -172,7 +200,10 @@ func setupService(clusterIP, dnsIP string, dnsPort int) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
+func createEndpoint(client *kubeclient.Client, meta kube.ObjectMeta, dnsIP string, dnsPort int) error {
 	endpoints := &kube.Endpoints{
 		ObjectMeta: meta,
 		Subsets: []kube.EndpointSubset{
@@ -194,7 +225,7 @@ func setupService(clusterIP, dnsIP string, dnsPort int) error {
 		},
 	}
 
-	_, err = client.Endpoints(meta.Namespace).Create(endpoints)
+	_, err := client.Endpoints(meta.Namespace).Create(endpoints)
 	if err != nil {
 		return err
 	}
