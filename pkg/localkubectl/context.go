@@ -52,7 +52,7 @@ func GetCurrentContext() (string, error) {
 	pathOpts := kubectlcfg.NewDefaultPathOptions()
 	config, err := getConfig(pathOpts)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	return config.CurrentContext, nil

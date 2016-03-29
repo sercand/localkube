@@ -87,7 +87,7 @@ func (d *Controller) OnlyLocalkubeCtr() (ctrId string, running bool, err error) 
 func (d *Controller) CreateCtr(name, imageTag string) (ctrId string, running bool, err error) {
 	image := fmt.Sprintf("%s:%s", LocalkubeImageName, imageTag)
 	ctrOpts := docker.CreateContainerOptions{
-		Name: LocalkubeContainerName,
+		Name: name,
 		Config: &docker.Config{
 			Hostname: name,
 			Image:    image,
