@@ -44,6 +44,11 @@ func SetupContext(clusterName, contextName, kubeAPIServer string, setCurrent boo
 	context.Cluster = clusterName
 	config.Contexts[contextName] = context
 
+	// set as current if requested
+	if setCurrent {
+		config.CurrentContext = contextName
+	}
+
 	return kubectlcfg.ModifyConfig(pathOpts, *config, true)
 }
 

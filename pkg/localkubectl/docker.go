@@ -8,7 +8,7 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
-const (
+var (
 	// LocalkubeLabel is the label that identifies localkube containers
 	LocalkubeLabel = "rsprd.com/name=localkube"
 
