@@ -39,7 +39,7 @@ func Command(out io.Writer) *cli.Command {
 				ArgsUsage:   "-t specifies localkube image tag to use, default is latest",
 				Action: func(c *cli.Context) {
 					// create new Docker client
-					ctlr, err := NewControllerFromEnv(l)
+					ctlr, err := NewControllerFromEnv(out)
 					if err != nil {
 						l.Fatal(err)
 					}
@@ -87,7 +87,7 @@ func Command(out io.Writer) *cli.Command {
 				Description: "Stops the localkube cluster",
 				ArgsUsage:   "-r removes container",
 				Action: func(c *cli.Context) {
-					ctlr, err := NewControllerFromEnv(l)
+					ctlr, err := NewControllerFromEnv(out)
 					if err != nil {
 						l.Fatal(err)
 					}
@@ -100,7 +100,9 @@ func Command(out io.Writer) *cli.Command {
 					}
 
 					for _, ctr := range ctrs {
-						ctlr.StopCtr(ctr.ID, remove)
+						if remove || runningStatus(ctr.Status) {
+							ctlr.StopCtr(ctr.ID, remove)
+						}
 					}
 				},
 			},
@@ -148,6 +150,8 @@ func startCluster(ctlr *Controller, log *log.Logger, c *cli.Context) error {
 		if err != nil {
 			return err
 		}
+	} else {
+		log.Println("Localkube is already running")
 	}
 	return nil
 }

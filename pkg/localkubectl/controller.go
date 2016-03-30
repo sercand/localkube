@@ -7,6 +7,8 @@ import (
 	"log"
 	"strings"
 
+	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/docker/docker/pkg/term"
 	docker "github.com/fsouza/go-dockerclient"
 )
 
@@ -109,11 +111,13 @@ func (d *Controller) CreateCtr(name, imageTag string) (ctrId string, running boo
 		},
 	}
 
+	d.log.Println("Creating localkube container...")
 	ctr, err := d.CreateContainer(ctrOpts)
 	if err != nil {
 		if err == docker.ErrNoSuchImage {
 			// if image does not exist, pull it
-			if pullErr := d.PullImage(imageTag); pullErr != nil {
+			d.log.Printf("Localkube image '%s' not found, pulling now:\n", image)
+			if pullErr := d.PullImage(imageTag, false); pullErr != nil {
 				return "", false, pullErr
 			}
 			return d.CreateCtr(name, imageTag)
@@ -124,11 +128,21 @@ func (d *Controller) CreateCtr(name, imageTag string) (ctrId string, running boo
 }
 
 // PullImage will pull the localkube image on the connected Docker daemon
-func (d *Controller) PullImage(imageTag string) error {
+func (d *Controller) PullImage(imageTag string, silent bool) error {
 	pullOpts := docker.PullImageOptions{
 		Repository: LocalkubeImageName,
 		Tag:        imageTag,
 	}
+
+	in, out := io.Pipe()
+	// print pull progress if not silent
+	if !silent {
+		pullOpts.RawJSONStream = true
+		pullOpts.OutputStream = out
+		outFd, isTerminal := term.GetFdInfo(d.out)
+		go jsonmessage.DisplayJSONMessagesStream(in, d.out, outFd, isTerminal)
+	}
+
 	err := d.Client.PullImage(pullOpts, docker.AuthConfiguration{})
 	if err != nil {
 		return fmt.Errorf("failed to pull localkube image: %v", err)
@@ -161,6 +175,7 @@ func (d *Controller) StartCtr(ctrId, etcdDataDir string) error {
 		Privileged:    true,
 	}
 
+	d.log.Println("Starting localkube container...")
 	err := d.StartContainer(ctrId, hostCfg)
 	if err != nil {
 		return fmt.Errorf("could not start container `%s`: %v", ctrId, err)
@@ -170,6 +185,7 @@ func (d *Controller) StartCtr(ctrId, etcdDataDir string) error {
 
 // StopCtr stops the container with the given id. If delete is true, deletes container after stopping.
 func (d *Controller) StopCtr(ctrId string, remove bool) error {
+	d.log.Printf("Stopping container '%s'\n", ctrId)
 	err := d.StopContainer(ctrId, 5)
 	if err != nil && !remove {
 		return fmt.Errorf("unable to stop localkube container: %v", err)
@@ -179,6 +195,8 @@ func (d *Controller) StopCtr(ctrId string, remove bool) error {
 		removeCtrOpts := docker.RemoveContainerOptions{
 			ID: ctrId,
 		}
+
+		d.log.Printf("Removing container '%s'\n", ctrId)
 		err = d.RemoveContainer(removeCtrOpts)
 		if err != nil {
 			return fmt.Errorf("unable to remove localkube container: %v", err)
