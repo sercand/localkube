@@ -4,7 +4,7 @@ package localkubectl
 import (
 	"fmt"
 	"io"
-	"os"
+	"log"
 	"strings"
 
 	"github.com/codegangsta/cli"
@@ -27,6 +27,7 @@ var (
 
 // Command returns a Command with subcommands for starting and stopping a localkube cluster
 func Command(out io.Writer) *cli.Command {
+	l := log.New(out, "", 0)
 	return &cli.Command{
 		Name:        "cluster",
 		Description: "Manages localkube Kubernetes development environment",
@@ -38,21 +39,21 @@ func Command(out io.Writer) *cli.Command {
 				ArgsUsage:   "-t specifies localkube image tag to use, default is latest",
 				Action: func(c *cli.Context) {
 					// create new Docker client
-					ctlr, err := NewControllerFromEnv()
+					ctlr, err := NewControllerFromEnv(l)
 					if err != nil {
-						fatal(out, err)
+						l.Fatal(err)
 					}
 
 					// create (if needed) and start localkube container
-					err = startCluster(ctlr, out, c)
+					err = startCluster(ctlr, l, c)
 					if err != nil {
-						fatal(out, fmt.Errorf("could not start localkube: %v", err))
+						l.Fatalf("could not start localkube: %v", err)
 					}
 
 					// guess which IP the API server will be on
 					host, err := identifyHost(ctlr.Endpoint())
 					if err != nil {
-						fatal(out, err)
+						l.Fatal(err)
 					}
 
 					// use default port
@@ -61,7 +62,7 @@ func Command(out io.Writer) *cli.Command {
 					// setup localkube kubectl context
 					currentContext, err := GetCurrentContext()
 					if err != nil {
-						fatal(out, err)
+						l.Fatal(err)
 					}
 
 					// set as current if no CurrentContext is set
@@ -69,14 +70,14 @@ func Command(out io.Writer) *cli.Command {
 
 					err = SetupContext(LocalkubeClusterName, LocalkubeContext, host, setCurrent)
 					if err != nil {
-						fatal(out, err)
+						l.Fatal(err)
 					}
 
 					// display help text messages if context change
 					if setCurrent {
-						fmt.Fprintf(out, "Created `%s` context and set it as current.\n", LocalkubeContext)
+						l.Printf("Created `%s` context and set it as current.\n", LocalkubeContext)
 					} else if currentContext != LocalkubeContext {
-						fmt.Fprintln(out, SwitchContextInstructions(LocalkubeContext))
+						l.Println(SwitchContextInstructions(LocalkubeContext))
 					}
 				},
 			},
@@ -86,12 +87,21 @@ func Command(out io.Writer) *cli.Command {
 				Description: "Stops the localkube cluster",
 				ArgsUsage:   "-r removes container",
 				Action: func(c *cli.Context) {
-					ctlr, err := NewControllerFromEnv()
+					ctlr, err := NewControllerFromEnv(l)
 					if err != nil {
-						fatal(out, err)
+						l.Fatal(err)
 					}
 
-					stopCluster(ctlr, out, c)
+					remove := c.Bool("r")
+
+					ctrs, err := ctlr.ListLocalkubeCtrs(true)
+					if err != nil {
+						l.Fatal(err)
+					}
+
+					for _, ctr := range ctrs {
+						ctlr.StopCtr(ctr.ID, remove)
+					}
 				},
 			},
 		},
@@ -99,7 +109,7 @@ func Command(out io.Writer) *cli.Command {
 }
 
 // startCluster configures and starts a cluster using command line parameters
-func startCluster(ctlr *Controller, out io.Writer, c *cli.Context) error {
+func startCluster(ctlr *Controller, log *log.Logger, c *cli.Context) error {
 	var err error
 
 	// set data directory
@@ -142,21 +152,6 @@ func startCluster(ctlr *Controller, out io.Writer, c *cli.Context) error {
 	return nil
 }
 
-// stopCluster stops a running cluster
-func stopCluster(ctlr *Controller, out io.Writer, c *cli.Context) error {
-	remove := c.Bool("r")
-
-	ctrs, err := ctlr.ListLocalkubeCtrs(true)
-	if err != nil {
-		return err
-	}
-
-	for _, ctr := range ctrs {
-		ctlr.StopCtr(ctr.ID, remove)
-	}
-	return nil
-}
-
 func identifyHost(endpoint string) (string, error) {
 	beginPort := strings.LastIndex(endpoint, ":")
 	switch {
@@ -169,9 +164,4 @@ func identifyHost(endpoint string) (string, error) {
 		return "127.0.0.1", nil
 	}
 	return "", fmt.Errorf("Could not determine localkube API server from endpoint `%s`", endpoint)
-}
-
-func fatal(out io.Writer, err error) {
-	fmt.Fprintf(out, "%v\n", err)
-	os.Exit(1)
 }

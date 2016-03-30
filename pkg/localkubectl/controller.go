@@ -3,6 +3,8 @@ package localkubectl
 import (
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"strings"
 
 	docker "github.com/fsouza/go-dockerclient"
@@ -28,28 +30,34 @@ var (
 // Controller provides a wrapper around the Docker client for easy control of localkube.
 type Controller struct {
 	*docker.Client
+	log *log.Logger
+	out io.Writer
 }
 
 // NewController returns a localkube Docker client from a created *docker.Client
-func NewController(client *docker.Client) (*Controller, error) {
+func NewController(client *docker.Client, out io.Writer) (*Controller, error) {
 	_, err := client.Version()
 	if err != nil {
 		return nil, fmt.Errorf("Unable to establish connection with Docker daemon: %v", err)
 	}
 
+	logger := log.New(out, "", 0)
+
 	return &Controller{
 		Client: client,
+		log:    logger,
+		out:    out,
 	}, nil
 }
 
 // NewControllerFromEnv creates a new Docker client using environment clues.
-func NewControllerFromEnv() (*Controller, error) {
+func NewControllerFromEnv(out io.Writer) (*Controller, error) {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		return nil, fmt.Errorf("could not create Docker client: %v", err)
 	}
 
-	return NewController(client)
+	return NewController(client, out)
 }
 
 // ListLocalkubeCtrs returns a list of localkube containers on this Docker daemon. If a is true only non-running containers will also be displayed
