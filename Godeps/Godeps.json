@@ -4,7 +4,8 @@
 	"GodepVersion": "v60",
 	"Packages": [
 		".",
-		"./cmd/localkube"
+		"./cmd/localkube",
+		"./pkg/..."
 	],
 	"Deps": [
 		{
@@ -227,6 +228,11 @@
 			"ImportPath": "github.com/boltdb/bolt",
 			"Comment": "v1.1.0-65-gee4a088",
 			"Rev": "ee4a0888a9abe7eefe5a0992ca4cb06864839873"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/cli",
+			"Comment": "1.2.0-235-gbc465be",
+			"Rev": "bc465becccd1d527002fda095fc3c19d9c115029"
 		},
 		{
 			"ImportPath": "github.com/coreos/etcd/Godeps/_workspace/src/bitbucket.org/ww/goautoneg",
@@ -1119,6 +1125,10 @@
 			"ImportPath": "github.com/mistifyio/go-zfs",
 			"Comment": "v2.1.1-5-g1b4ae6f",
 			"Rev": "1b4ae6fb4e77b095934d4430860ff202060169f8"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/go-homedir",
+			"Rev": "981ab348d865cf048eb7d17e78ac7192632d8415"
 		},
 		{
 			"ImportPath": "github.com/mitchellh/mapstructure",
@@ -2175,6 +2185,16 @@
 		},
 		{
 			"ImportPath": "k8s.io/kubernetes/pkg/kubectl",
+			"Comment": "v1.2.0",
+			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/kubectl/cmd/config",
+			"Comment": "v1.2.0",
+			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/kubectl/cmd/util",
 			"Comment": "v1.2.0",
 			"Rev": "5cb86ee022267586db386f62781338b0483733b3"
 		},
