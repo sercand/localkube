@@ -34,6 +34,7 @@ func StartControllerManagerServer() {
 	config.DeletingPodsQps = 0.1
 	config.DeletingPodsBurst = 10
 	config.EnableProfiling = true
+	config.ServiceAccountKeyFile = "/tmp/kube-serviceaccount.key"
 
 	fn := func() error {
 		return controllerManager.Run(config)
