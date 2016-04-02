@@ -10,6 +10,10 @@ import (
 	apiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
 	etcdstorage "k8s.io/kubernetes/pkg/storage/etcd"
+	"crypto/rsa"
+	"crypto/rand"
+	"encoding/pem"
+	"crypto/x509"
 )
 
 const (
@@ -41,6 +45,25 @@ func NewAPIServer() Server {
 	}
 }
 
+func MakeRSAKey(privateKeyPath string) error {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
+	if err != nil {
+		return err
+	}
+
+	// generate and write private key as PEM
+	privateKeyFile, err := os.Create(privateKeyPath)
+	defer privateKeyFile.Close()
+	if err != nil {
+		return err
+	}
+	privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
+	if err := pem.Encode(privateKeyFile, privateKeyPEM); err != nil {
+		return err
+	}
+	return nil
+}
+
 func StartAPIServer() {
 	APIServerStop = make(chan struct{})
 	config := options.NewAPIServer()
@@ -65,6 +88,10 @@ func StartAPIServer() {
 	config.EnableProfiling = true
 	config.EnableWatchCache = true
 	config.MinRequestTimeout = 1800
+
+	MakeRSAKey("/tmp/kube-serviceaccount.key")
+	config.ServiceAccountKeyFile = "/tmp/kube-serviceaccount.key"
+	config.ServiceAccountLookup = false
 
 	fn := func() error {
 		return apiserver.Run(config)
