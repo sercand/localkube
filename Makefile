@@ -77,7 +77,7 @@ push-image: build-image
 
 .PHONY: push-latest
 push-latest: build-image
-	$(DOCKER) $(DOCKER_OPTS) tag $(DOCKER_IMAGE_NAME) $(ORG)/$(NAME):latest
+	$(DOCKER) $(DOCKER_OPTS) tag -f $(DOCKER_IMAGE_NAME) $(ORG)/$(NAME):latest
 	$(DOCKER) $(DOCKER_OPTS) push $(ORG)/$(NAME):latest
 
 .PHONY: context
