@@ -44,6 +44,10 @@ all: deps clean validate build build-image
 .PHONY: validate
 validate: checkgofmt
 
+.PHONY: integration
+integration: build-image
+	./test/mattermost-demo.sh
+
 .PHONY: build
 build: build/localkube-$(GOOS)
 
