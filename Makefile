@@ -39,10 +39,14 @@ DOCKER_IMAGE_NAME = "$(ORG)/$(NAME):$(TAG)"
 DOCKER_DEV_IMAGE ?= "golang:1.6"
 
 .PHONY: all
-all: deps clean validate build build-image
+all: deps clean validate build build-image integration
 
 .PHONY: validate
 validate: checkgofmt
+
+.PHONY: integration
+integration: build-image
+	./test/mattermost-demo.sh
 
 .PHONY: build
 build: build/localkube-$(GOOS)
