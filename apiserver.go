@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	apiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
 	etcdstorage "k8s.io/kubernetes/pkg/storage/etcd"
-	"crypto/rsa"
-	"crypto/rand"
-	"encoding/pem"
-	"crypto/x509"
 )
 
 const (
@@ -92,6 +92,7 @@ func StartAPIServer() {
 	MakeRSAKey("/tmp/kube-serviceaccount.key")
 	config.ServiceAccountKeyFile = "/tmp/kube-serviceaccount.key"
 	config.ServiceAccountLookup = false
+	config.AdmissionControl = "NamespaceLifecycle,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota"
 
 	fn := func() error {
 		return apiserver.Run(config)
