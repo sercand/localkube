@@ -39,10 +39,14 @@ DOCKER_IMAGE_NAME = "$(ORG)/$(NAME):$(TAG)"
 DOCKER_DEV_IMAGE ?= "golang:1.6"
 
 .PHONY: all
-all: deps clean validate build build-image
+all: deps clean validate build build-image integration
 
 .PHONY: validate
 validate: checkgofmt
+
+.PHONY: integration
+integration: build-image
+	./test/mattermost-demo.sh
 
 .PHONY: build
 build: build/localkube-$(GOOS)
@@ -73,7 +77,7 @@ push-image: build-image
 
 .PHONY: push-latest
 push-latest: build-image
-	$(DOCKER) $(DOCKER_OPTS) tag $(DOCKER_IMAGE_NAME) $(ORG)/$(NAME):latest
+	$(DOCKER) $(DOCKER_OPTS) tag -f $(DOCKER_IMAGE_NAME) $(ORG)/$(NAME):latest
 	$(DOCKER) $(DOCKER_OPTS) push $(ORG)/$(NAME):latest
 
 .PHONY: context
