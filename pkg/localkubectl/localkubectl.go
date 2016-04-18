@@ -38,7 +38,7 @@ func Command(out io.Writer) *cli.Command {
 				Description: "Starts the localkube cluster",
 				Flags: []cli.Flag{
 					cli.StringFlag{
-						Name: "t",
+						Name:  "t",
 						Value: LocalkubeDefaultTag,
 						Usage: "specifies localkube image tag to use, default is latest",
 					},
@@ -93,7 +93,7 @@ func Command(out io.Writer) *cli.Command {
 				Description: "Stops the localkube cluster",
 				Flags: []cli.Flag{
 					cli.BoolFlag{
-						Name: "r",
+						Name:  "r",
 						Usage: "removes container",
 					},
 				},
